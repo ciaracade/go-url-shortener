@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -44,8 +45,38 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	// Write code that parses the provided YAML data
-	// extracts paths and URLs, and creates a map.
-	// Then, use the logic from MapHandler to handle requests.
-	return nil, nil
+	// 1. Parse the yaml
+	var pathURLS []pathURL
+	err := yaml.Unmarshal(yml, &pathURLS)
+	if err != nil {
+		return nil, err
+	}
+	// 2. Convert YAML array into map
+	pathsToUrls := map[string]string{}
+	for _, pu := range pathURLS {
+		pathsToUrls[pu.Path] = pu.URL
+	}
+
+	// 3. return a maphanlder using map
+	return MapHandler(pathsToUrls, fallback), nil
+}
+
+type pathURL struct {
+	Path string `yaml:"path"`
+	URL  string	`yaml:"url"`
+}
+
+func JSONHandler ( json []byte, fallback http.Hanlder) (http.HandlerFunc, error) {
+	// 1. Parse JSON data
+	var pathsToURLS []jsonPathURL
+
+	// 2. Convert JSON into map
+
+	// 3. return a maphandler with pathToUrls
+	return MapHandler(pathsToUrls, fallback), nil
+}
+
+type jsonPathURL struct {
+	Path string `path`
+	url string `url`
 }
