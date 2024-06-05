@@ -3,6 +3,9 @@
 A URL shortener writtenin GoLang that will look at the path of any incoming web request and determine if it should redirect the user to a new page.
 
 
+From [Gophercises](https://gophercises.com/)
+
+
 ## Features 
 ### MapHandler
 - Returns an http.HandlerFunc that will attempt to map any paths to their corresponding URL 
