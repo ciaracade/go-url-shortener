@@ -1,6 +1,7 @@
-package urlshort
+package main
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -11,8 +12,19 @@ import (
 // If the path is not provided in the map, then the fallback
 // http.Handler will be called instead.
 func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
-	//	TODO: Implement this...
-	return nil
+	// Return handler func
+	return func(writer  http.ResponseWriter, response *http.Request){
+		// if we can match a path
+		// true/false is second argument and 
+		if dest, ok := pathsToUrls[response.URL.Path]; ok {
+			// go to it
+			fmt.Printf("New dest:", dest)
+			http.Redirect(writer, response, dest, http.StatusFound)
+			return
+		}
+		// otherwise fallback to it
+		fallback.ServeHTTP(writer, response)
+	}
 }
 
 // YAMLHandler will parse the provided YAML and then return
@@ -32,6 +44,8 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	// TODO: Implement this...
+	// Write code that parses the provided YAML data
+	// extracts paths and URLs, and creates a map.
+	// Then, use the logic from MapHandler to handle requests.
 	return nil, nil
 }
