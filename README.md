@@ -1,6 +1,6 @@
 # URL Shortener in Golang 
 
-A URL shortener writtenin GoLang that will look at the path of any incoming web request and determine if it should redirect the user to a new page.
+A URL shortener written in GoLang that will look at the path of any incoming web request and determine if it should redirect the user to a new page.
 
 
 From [Gophercises](https://gophercises.com/)
