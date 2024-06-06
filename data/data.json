@@ -1,0 +1,18 @@
+[
+    {
+        "path": "/github",
+        "url": "https://github.com"
+    },
+    {
+        "path": "/stackoverflow",
+        "url": "https://stackoverflow.com"
+    },
+    {
+        "path": "/gitlab",
+        "url": "https://gitlab.com"
+    },
+    {
+        "path": "/bitbucket",
+        "url": "https://bitbucket.org"
+    }
+]
