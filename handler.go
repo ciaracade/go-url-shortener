@@ -80,3 +80,9 @@ type jsonPathURL struct {
 	Path string `path`
 	url string `url`
 }
+
+func DBHandler () {
+	// 1. Access database
+	// 2. Load path's url from database or turn into path
+	// 3. return a maphandler with pathToUrls
+}
