@@ -4,17 +4,21 @@ import (
 	"fmt"
 	"net/http"
 	"io/ioutil"
-	"log"
+	"flag"
 )
 
 
 func main() {
 	// Accept command line arguments to see which setting to be used
-	var option string
-	flag.StringVar(&option, )
+	var yamlFlag, jsonFlag, dbFlag string
 
+	// Command line arguments -> variable, flag name, default, desc
+	flag.StringVar(&yamlFlag, "yaml", "", "file name for yaml URL paths")
+	flag.StringVar(&jsonFlag, "json", "", "file name for json URL paths")
+	flag.StringVar(&dbFlag, "db", "", "file name for database URl paths")
+
+	// Parse the flags
 	flag.Parse()
-
 
 	mux := defaultMux()
 
@@ -30,47 +34,58 @@ func main() {
 	}
 	mapHandler := MapHandler(pathsToUrls, mux)
 
-	switch option{
-	case "yaml":
-		// Build the YAMLHandler using the mapHandler as the
-		// fallback
-		yaml, err := ioutil.ReadFile("data.yaml")
-		yamlHandler, err := YAMLHandler([]byte(yaml), mapHandler)
+	// Check the mode and execute corresponding block of code
+	if yamlFlag != "" {
+		fmt.Println("Loading via yaml file:", yamlFlag)
+		
+		// Get YAML Data from yaml file
+		yamlData, err := ioutil.ReadFile(yamlFlag)
 		if err != nil {
-		panic(err)
+			panic(err)
 		}
 
+		// Build the YAMLHandler using the mapHandler as the fallback
+		yamlHandler, err := YAMLHandler(yamlData, mapHandler)
+		if err != nil {
+			panic(err)
+		}
+
+		// Start server with handler
 		fmt.Println("Starting the server on :8080")
-		http.ListenAndServe(":8080", mapHandler)
+		http.ListenAndServe(":8080", yamlHandler)
 
+		return
+	} else if jsonFlag != "" {
+		fmt.Println("Loading via json file:", jsonFlag)
+		
+		// Get JSON data from JSON file
+		jsonData, err := ioutil.ReadFile(jsonFlag)
+		if err != nil {
+			panic(err)
+		}
 
-	case "json":
+		// Build the JSONHandler using the mapHandler as a fallback
+		jsonHandler, err := JSONHandler(jsonData, mapHandler)
+		if err != nil {
+			panic(err)
+		}
 
-	case "db":
-	default:
-		fmt.Println("Starting the server on :8080")
-	http.ListenAndServe(":8080", mapHandler)
-}
-	
+		// Start server with handler
+		fmt.Println("starting the server :8080")
+		http.ListenAndServe(":8080", jsonHandler)
 
+		return
+	} else if dbFlag != "" {
+		fmt.Println("Loading via db file:", dbFlag)
+		// Database handling code goes here
 
-	// Build the YAMLHandler using the mapHandler as the
-	// fallback
-	yaml := `
-- path: /urlshort
-  url: https://github.com/gophercises/urlshort
-- path: /urlshort-final
-  url: https://github.com/gophercises/urlshort/tree/solution
-`
-	yamlHandler, err := YAMLHandler([]byte(yaml), mapHandler)
-	if err != nil {
-		panic(err)
+		return
 	}
 
+	// Default case -> use MapHandler
+	fmt.Println("Loading via default case:", mapHandler)
 	fmt.Println("Starting the server on :8080")
 	http.ListenAndServe(":8080", mapHandler)
-
-
 }
 
 func defaultMux() *http.ServeMux {

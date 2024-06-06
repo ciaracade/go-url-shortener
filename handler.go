@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	yaml "gopkg.in/yaml.v2"
+	"encoding/json"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -19,7 +19,6 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 		// true/false is second argument and 
 		if dest, ok := pathsToUrls[response.URL.Path]; ok {
 			// go to it
-			fmt.Printf("New dest:", dest)
 			http.Redirect(writer, response, dest, http.StatusFound)
 			return
 		}
@@ -44,17 +43,17 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 //
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
-func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
+func YAMLHandler(yamlData []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	// 1. Parse the yaml
 	var pathURLS []pathURL
-	err := yaml.Unmarshal(yml, &pathURLS)
+	err := yaml.Unmarshal(yamlData, &pathURLS)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	// 2. Convert YAML array into map
 	pathsToUrls := map[string]string{}
-	for _, pu := range pathURLS {
-		pathsToUrls[pu.Path] = pu.URL
+	for _, data := range pathURLS {
+		pathsToUrls[data.Path] = data.URL
 	}
 
 	// 3. return a maphanlder using map
@@ -66,19 +65,29 @@ type pathURL struct {
 	URL  string	`yaml:"url"`
 }
 
-func JSONHandler ( json []byte, fallback http.Hanlder) (http.HandlerFunc, error) {
+func JSONHandler ( jsonData []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	// 1. Parse JSON data
-	var pathsToURLS []jsonPathURL
+	var pathURLS []jsonPathURL
+
+	// loading byte info into structs
+	err := json.Unmarshal(jsonData, &pathURLS)
+	if err != nil {
+		panic(err)
+	}
 
 	// 2. Convert JSON into map
+	pathsToUrls := map[string]string{}
+	for _, data := range pathURLS {
+		pathsToUrls[data.Path] = data.URL
+	}
 
 	// 3. return a maphandler with pathToUrls
 	return MapHandler(pathsToUrls, fallback), nil
 }
 
 type jsonPathURL struct {
-	Path string `path`
-	url string `url`
+	Path string `json:"path"`
+	URL string `json:"url"`
 }
 
 func DBHandler () {
