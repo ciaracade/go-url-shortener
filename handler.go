@@ -4,6 +4,7 @@ import (
 	"net/http"
 	yaml "gopkg.in/yaml.v2"
 	"encoding/json"
+	"github.com/boltdb/bolt"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -90,8 +91,25 @@ type jsonPathURL struct {
 	URL string `json:"url"`
 }
 
-func DBHandler () {
+func DBHandler(db *bolt.DB, fallback http.Handler) http.HandlerFunc {
 	// 1. Access database
-	// 2. Load path's url from database or turn into path
+	pathsToUrls := map[string]string{}
+
+	err := db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("pathstourls"))
+
+		// 2. Load path's url from database or turn into path
+		b.ForEach(func(path, url []byte) error {
+			pathsToUrls[string(path)] = string(url)
+			return nil
+		})
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	// 3. return a maphandler with pathToUrls
+	return MapHandler(pathsToUrls, fallback)
 }
+

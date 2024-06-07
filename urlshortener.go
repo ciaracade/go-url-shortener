@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"flag"
+	"github.com/boltdb/bolt"
 )
 
 
@@ -77,7 +78,42 @@ func main() {
 		return
 	} else if dbFlag != "" {
 		fmt.Println("Loading via db file:", dbFlag)
-		// Database handling code goes here
+		
+		// Start a db and open file
+		db, err := bolt.Open(dbFlag, 0600, nil)
+		if err != nil {
+			panic(err)
+		}
+		defer db.Close()
+
+		// Load data into database
+		err = db.Update(func(tx *bolt.Tx) error {
+			// Create bucket if it doesn't exist
+			b := tx.Bucket([]byte("pathstourls"))
+			if b == nil {
+				var err error
+				b, err = tx.CreateBucketIfNotExists([]byte("pathstourls"))
+				if err != nil {
+					return err
+				}
+			}
+
+			err = b.Put([]byte("/wiki"),[]byte("https://www.wikipedia.org/"))
+			return err
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		// Build dbHanlder using Bolt db and mapHandler as a fallback
+		dbHandler := DBHandler(db, mapHandler)
+		if err != nil {
+			panic(err)
+		}
+
+		// Start server with handler
+		fmt.Println("starting the server :8080")
+		http.ListenAndServe(":8080", dbHandler)
 
 		return
 	}
