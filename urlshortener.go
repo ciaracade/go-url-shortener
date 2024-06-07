@@ -6,17 +6,20 @@ import (
 	"io/ioutil"
 	"flag"
 	"github.com/boltdb/bolt"
+	_ "github.com/mattn/go-sqlite3"
+	"database/sql"
 )
 
 
 func main() {
 	// Accept command line arguments to see which setting to be used
-	var yamlFlag, jsonFlag, dbFlag string
+	var yamlFlag, jsonFlag, boltdbFlag, sqldbFlag string
 
 	// Command line arguments -> variable, flag name, default, desc
 	flag.StringVar(&yamlFlag, "yaml", "", "file name for yaml URL paths")
 	flag.StringVar(&jsonFlag, "json", "", "file name for json URL paths")
-	flag.StringVar(&dbFlag, "db", "", "file name for database URl paths")
+	flag.StringVar(&boltdbFlag, "boltdb", "", "file name for bolt database URl paths")
+	flag.StringVar(&sqldbFlag, "sqldb", "", "file name for SQL database URl paths")
 
 	// Parse the flags
 	flag.Parse()
@@ -76,11 +79,11 @@ func main() {
 		http.ListenAndServe(":8080", jsonHandler)
 
 		return
-	} else if dbFlag != "" {
-		fmt.Println("Loading via db file:", dbFlag)
+	} else if boltdbFlag != "" {
+		fmt.Println("Loading via Bolt db file:", boltdbFlag)
 		
 		// Start a db and open file
-		db, err := bolt.Open(dbFlag, 0600, nil)
+		db, err := bolt.Open(boltdbFlag, 0600, nil)
 		if err != nil {
 			panic(err)
 		}
@@ -105,15 +108,50 @@ func main() {
 			panic(err)
 		}
 
-		// Build dbHanlder using Bolt db and mapHandler as a fallback
-		dbHandler := DBHandler(db, mapHandler)
+		// Build boltdbHanlder using Bolt db and mapHandler as a fallback
+		boltdbHandler := BoltDBHandler(db, mapHandler)
 		if err != nil {
 			panic(err)
 		}
 
 		// Start server with handler
 		fmt.Println("starting the server :8080")
-		http.ListenAndServe(":8080", dbHandler)
+		http.ListenAndServe(":8080", boltdbHandler)
+
+		return
+	} else if sqldbFlag != "" {
+		fmt.Println("Loading via SQLite db file.")
+
+		// Start a db and open a file
+		db, err := sql.Open("sqlite3", sqldbFlag)
+		if err != nil {
+			panic(err)
+		}
+		defer db.Close()
+
+		const create = `
+		CREATE TABLE IF NOT EXISTS pathstourls (
+			path TEXT NOT NULL PRIMARY KEY,
+			url TEXT NOT NULL
+		);`
+
+		if _, err := db.Exec(create); err != nil {
+			panic(err)
+		}
+
+		example := `INSERT OR IGNORE INTO pathstourls VALUES(?,?);`
+
+		_, err = db.Exec(example, "/sql", "https://sqlite.org/")
+		if err != nil {
+			panic(err)
+		}
+
+		// Build sqldbHanlder using SQLite db and mapHandler as a fallback
+		sqldbHandler := SQLDBHanlder(db, mapHandler)
+
+		// Start server with handler
+		fmt.Println("starting the server :8080")
+		http.ListenAndServe(":8080", sqldbHandler)
 
 		return
 	}

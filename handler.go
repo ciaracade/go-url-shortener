@@ -5,6 +5,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 	"encoding/json"
 	"github.com/boltdb/bolt"
+	"database/sql"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -91,14 +92,14 @@ type jsonPathURL struct {
 	URL string `json:"url"`
 }
 
-func DBHandler(db *bolt.DB, fallback http.Handler) http.HandlerFunc {
+func BoltDBHandler(db *bolt.DB, fallback http.Handler) http.HandlerFunc {
 	// 1. Access database
 	pathsToUrls := map[string]string{}
 
 	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("pathstourls"))
 
-		// 2. Load path's url from database or turn into path
+		// 2. Load path's url from database and turn into path
 		b.ForEach(func(path, url []byte) error {
 			pathsToUrls[string(path)] = string(url)
 			return nil
@@ -111,5 +112,33 @@ func DBHandler(db *bolt.DB, fallback http.Handler) http.HandlerFunc {
 
 	// 3. return a maphandler with pathToUrls
 	return MapHandler(pathsToUrls, fallback)
+}
+
+func SQLDBHanlder (db *sql.DB, fallback http.Handler) http.HandlerFunc {
+	// 1. Access database
+	rows, err := db.Query(`SELECT path, url FROM pathstourls;`)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	//2. Load path's url from database or turn into path
+	pathToUrls := map[string]string {}
+
+	for rows.Next() {
+		var path string
+		var url string
+		err := rows.Scan(&path, &url)
+		if err != nil {
+			panic(err)
+		}
+		pathToUrls[path] = url
+	}
+	if err = rows.Err(); err != nil {
+        panic(err)
+    }
+
+	// 3. return a maphandler with pathToUrls
+	return MapHandler(pathToUrls, fallback)
 }
 
