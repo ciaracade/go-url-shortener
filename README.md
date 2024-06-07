@@ -18,10 +18,16 @@ A URL shortener written in [GoLang](https://go.dev/) that will look at the path 
 - If the path is not provided in the map, then the fallback http.Handler will be called instead.
 
 
-### DBHandler
+### BOLTDBHandler
 - DB by [Bolt](https://pkg.go.dev/github.com/boltdb/bolt) 
 - Returns an http.HandlerFunc that will attempt to find in a database any paths to their corresponding URL 
 - If the path is not provided in the database, then the fallback http.Handler will be called instead.
+
+### SQLDBHandler
+- DB by [SQLite](https://pkg.go.dev/github.com/mattn/go-sqlite3) 
+- Returns an http.HandlerFunc that will attempt to find in a database any paths to their corresponding URL 
+- If the path is not provided in the database, then the fallback http.Handler will be called instead.
+
 
 
 ## Acknowledgement 
